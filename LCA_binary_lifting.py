@@ -20,7 +20,7 @@ class LCA:
         dfs(0)
         for jump in range(1,self.LOG):
             for node in range(n):
-                if self.parent[0][node]!=-1:
+                if self.parent[jump-1][node]!=-1:
                     self.parent[jump][node]=self.parent[jump-1][self.parent[jump-1][node]]
 
     def lca(self,a,b):
