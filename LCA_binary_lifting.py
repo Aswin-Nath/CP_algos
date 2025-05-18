@@ -44,3 +44,10 @@ class LCA:
         return find_lca(a,b)
     def D(self,a,b):
         return self.root_weight[a]+self.root_weight[b]-2*self.root_weight[self.lca(a,b)]
+    def kth(self,node,k):
+        for jump in range(self.LOG):
+            if k&(1<<jump):
+                node=self.parent[jump][node]
+                if node==-1:
+                    return -1
+        return node
