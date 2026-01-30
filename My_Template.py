@@ -12,6 +12,30 @@ from queue import *              # Includes Queue, LifoQueue, PriorityQueue usef
 import sys
 from typing import Generic, Iterable, Iterator, List, Tuple, TypeVar, Optional
 T = TypeVar('T')
+class TrieNode:
+    def __init__(self,val=-1):
+        self.child={}
+        self.val=val
+class Trie:
+    def __init__(self):
+        self.root=TrieNode()
+    def insert(self,word):
+        root=self.root
+        for i in word:
+            if i not in root.child:
+                root.child[i]=TrieNode(i)
+            root=root.child[i]
+    def prefix(self,word):
+        i=0
+        root=self.root
+        while i<len(word):
+            if not root:
+                return False
+            if word[i] not in root.child:
+                return False
+            root=root.child[i]
+            i+=1
+        return True
 class SortedList(Generic[T]):
     BUCKET_RATIO = 16
     SPLIT_RATIO = 24
@@ -173,9 +197,186 @@ def prime(n):
         i += 6
     return True
 
+def miller_is_prime(n):
+    """
+        Miller-Rabin test - O(7 * log2n)
+        Has 100% success rate for numbers less than 3e+9
+        use it in case of TC problem
+    """
+    if n < 5 or n & 1 == 0 or n % 3 == 0:
+        return 2 <= n <= 3
+    s = ((n - 1) & (1 - n)).bit_length() - 1
+    d = n >> s
+    for a in [2, 325, 9375, 28178, 450775, 9780504, 1795265022]:
+        p = pow(a, d, n)
+        if p == 1 or p == n - 1 or a % n == 0:
+            continue
+        for _ in range(s):
+            p = (p * p) % n
+            if p == n - 1:
+                break
+        else:
+            return False
+    return True
+
+import random
+RANDOM = random.randrange(1,2**62)
+def w(x):
+    return x ^ RANDOM
+class Xdict:
+    def __init__(self,L=[],flag=1):
+        self.d = {}
+        self.flag = flag
+        for j in L:self[j]+=1
+    def __setitem__(self,key,value):
+        self.d[w(key)] = value
+    def __getitem__(self,key):
+        return self.d.get(w(key),0) if self.flag else self.d[w(key)]
+    def keys(self):
+        return (w(i) for i in self.d)
+    def values(self):
+        return (self.d[i] for i in self.d)
+    def items(self):
+        return ((w(i),self.d[i]) for i in self.d)
+    def __repr__(self):
+        return '{'+','.join([str(w(i))+':'+str(self.d[i]) for i in self.d])+'}'
+    def __delitem__(self,val):
+        del self.d[w(val)]
+    def get(self,key,other):
+        return self.d.get(w(key),other)
+    def __contains__(self,key):
+        return w(key) in self.d
+    def __len__(self):
+        return len(self.d)
+    def clear(self):
+        self.d.clear()
+    def __iter__(self):
+        return iter(self.keys())
+
+def sieve(n):
+    primes = []
+    isp = [1] * (n+1)
+    isp[0] = isp[1] = 0
+    for i in range(2,n+1):
+        if isp[i]:
+            primes.append(i)
+            for j in range(i*i,n+1,i):
+                isp[j] = 0
+    return primes
+
+def all_fact(n):
+    """
+    returns a sorted list of all distinct factors of n in root n
+    """
+    small, large = [], []
+    for i in range(1, int(n**0.5) + 1, 2 if n & 1 else 1):
+        if not n % i:
+            small.append(i)
+            large.append(n // i)
+    if small[-1] == large[-1]:
+        large.pop()
+    large.reverse()
+    small.extend(large)
+    return small
+
+class Xset:
+    def __init__(self,L=[]):
+        self.s = set()
+        for j in L:self.add(j)
+    def add(self,key):
+        self.s.add(w(key))
+    def keys(self):
+        return (w(i) for i in self.s)
+    def __repr__(self):
+        return '{'+','.join([str(w(i)) for i in self.s])+'}'
+    def remove(self,val):
+        self.s.remove(w(val))
+    def __contains__(self,key):
+        return w(key) in self.s
+    def __len__(self):
+        return len(self.s)
+    def clear(self):
+        self.s.clear()
+    def __iter__(self):
+        return iter(self.keys())
+def get_matrix_input(N,typ):
+  G=[]
+  for i in range(N):
+    if typ=="str":
+      get=list(input())
+    else:
+      get=IL()
+    G.append(get)
+  return G
 char="abcdefghijklmnopqrstuvwxyz"
 mod=pow(10,9)+7
-for _ in range(int(input())):
-  n,k=IL()
+calc = False
+if calc:
+    def sieve_unique(N):
+        mini = [i for i in range(N)]
+        for i in range(2,N):
+            if mini[i]==i:
+                for j in range(2*i,N,i):
+                    mini[j] = i
+        return mini
+
+    MAX_N = 10**6+1
+    Lmini = sieve_unique(MAX_N)
+
+    def prime_factors(k,typ=0):
+        """
+            When the numbers are large this is the best method to get
+            unique prime factors, precompute n log log n , then each query is log n
+        """
+        if typ==0:
+            ans = Counter()
+        elif typ==1:
+            ans = set()
+        else:
+            ans = []
+        while k!=1:
+            if typ==0:
+                ans[Lmini[k]] += 1
+            elif typ==1:
+                ans.add(Lmini[k])
+            else:
+                ans.append(Lmini[k])
+            k //= Lmini[k]
+        return ans
+
+    def all_factors(x):
+        # returns all factors of x in log x + d
+        L = list(prime_factors(x).items())
+        st = [1]
+        for i in range(len(L)):
+            for j in range(len(st)-1,-1,-1):
+                k = L[i][0]
+                for l in range(L[i][1]):
+                    st.append(st[j]*k)
+                    k *= L[i][0]
+        return st
+from types import GeneratorType
+def bootstrap(f, stack=[]):
+    def wrappedfunc(*args, **kwargs):
+        if stack:
+            return f(*args, **kwargs)
+        else:
+            to = f(*args, **kwargs)
+            while True:
+                if type(to) is GeneratorType:
+                    stack.append(to)
+                    to = next(to)
+                else:
+                    stack.pop()
+                    if not stack:
+                        break
+                    to = stack[-1].send(to)
+            return to
+    return wrappedfunc
+
+t=int(input())
+# t=1
+for _ in range(t):
+  n=int(input())
   arr=IL()
   
